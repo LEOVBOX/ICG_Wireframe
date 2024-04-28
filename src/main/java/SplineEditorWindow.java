@@ -25,6 +25,7 @@ public class SplineEditorWindow extends JFrame {
             throw new RuntimeException(e);
         }
     }
+
     public static void main(String[] args) {
         new SplineEditorWindow();
     }
