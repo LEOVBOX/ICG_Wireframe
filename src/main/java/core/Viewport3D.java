@@ -7,63 +7,48 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
 public class Viewport3D extends JPanel {
     BSpline spline;
+
+    RotationFigure rotationFigure;
+
+    int M = 4;
 
     int width, height;
 
     int nearPlaneHeight, nearPlaneWidth;
 
     // Coordinate Z of near clip plane in camera space
-    double nearPlaneZ = 10;
+    double nearPlaneZ = 500;
 
     // Coordinate Z of far clip plane in camera space
-    double farPlaneZ = 20;
+    double farPlaneZ = 600;
 
     double cameraZ = 10;
 
-    double FOV = 45;
+    double FOV = Math.toRadians(10);
 
-    double phi;
+    double rotateY, rotateX;
 
-    private final double ANGLE_SCALE = 0.01;
+    int lastX, lastY;
+    private final double ANGLE_SCALE = 0.0001;
 
-
-    boolean pritPhi = false;
-
-    Object3D axis;
-
-    class Object3D {
-        ArrayList<Point3D> points;
-
-        ArrayList<Integer[]> edges;
-
-        public Object3D() {
-            points = new ArrayList<>();
-            edges = new ArrayList<>();
-        }
-
-        public void addPoint(Point3D point) {
-            points.add(point);
-        }
-
-        public void addEdge(int point1, int point2) {
-            if (points.size() < point2 || points.size() < point1) {
-                throw new IllegalArgumentException("Points of edge should be already added in model");
-            }
-
-            edges.add(new Integer[]{point1, point2});
-        }
-
-    }
 
     Object3D object3D;
+
+    Object3D axis;
 
     int centerX, centerY;
 
     double[][] projectionMatrix;
+
+    public void getRotationFigure() {
+        rotationFigure = new RotationFigure(M, spline);
+        rotationFigure.getObject3D(M);
+    }
 
     double[][] getProjectionMatrix() {
         return new double[][] {
@@ -82,20 +67,28 @@ public class Viewport3D extends JPanel {
         };
     }
 
-    private Point3D rotatePoint(Point3D point3D, double phi) {
+    double[][] getXRotationMatrix(double theta) {
+        return new double[][] {
+                {1, 0, 0},
+                {0, Math.cos(theta), -Math.sin(theta)},
+                {0, Math.sin(theta), Math.cos(theta)}
+        };
+    }
+
+    private Point3D rotatePoint(Point3D point3D, double rotateY, double rotateX) {
         double[] cords = {point3D.getX(), point3D.getY(), point3D.getZ()};
-        cords = MatrixUtils.multiply(getYRotationMatrix(phi), cords, false);
+        cords = MatrixUtils.multiply(getYRotationMatrix(rotateY), cords, false);
+        cords = MatrixUtils.multiply(getXRotationMatrix(rotateX), cords, false);
         return new Point3D(cords[0], cords[1], cords[2]);
     }
 
-    private void rotateObject(Object3D object3D, double phi) {
+    private Object3D rotateObject(Object3D object3D, double rotateY, double rotateX) {
+        Object3D result = new Object3D(object3D);
         for (Point3D point3D: object3D.points) {
-            double[] rCords = {point3D.getX(), point3D.getY(), point3D.getZ()};
-            rCords = MatrixUtils.multiply(getYRotationMatrix(phi), rCords, false);
-            object3D.points.set(object3D.points.indexOf(point3D), new Point3D(rCords[0], rCords[1], rCords[2]));
+            point3D.setLocation(rotatePoint(point3D, rotateY, rotateX));
         }
+        return result;
     }
-
 
 
     Point3D getNDCPoint(Point3D point) {
@@ -137,30 +130,30 @@ public class Viewport3D extends JPanel {
         return box;
     }
 
-    private void drawAxis(Graphics2D g2d, double phi) {
-        g2d.setColor(Color.WHITE);
-        Point windowOrigin = getWindowPoint(rotatePoint(new Point3D(0, 0, 0), phi));
-        //g2d.drawOval(windowOrigin.x - pointRadius, windowOrigin.y - pointRadius,2 *pointRadius, 2 *pointRadius);
+    private void drawAxis(Graphics2D g2d) {
+        if (rotateY != 0 || rotateX != 0) {
+            axis = rotateObject(axis, rotateY, rotateX);
+        }
+
+        Point windowOrigin = getWindowPoint(axis.points.get(0));
+        Point windowX = getWindowPoint(axis.points.get(1));
+        Point windowY = getWindowPoint(axis.points.get(2));
+        Point windowZ = getWindowPoint(axis.points.get(3));
 
         g2d.setColor(Color.RED);
-        Point windowOx = getWindowPoint(rotatePoint(new Point3D(1, 0, 0), phi));
-        //g2d.drawOval(windowOx.x - pointRadius, windowOx.y - pointRadius, 2* pointRadius, 2 * pointRadius);
-        g2d.drawLine(windowOrigin.x, windowOrigin.y, windowOx.x, windowOx.y);
+        g2d.drawLine(windowOrigin.x, windowOrigin.y, windowX.x, windowX.y);
 
         g2d.setColor(Color.GREEN);
-        Point windowOy = getWindowPoint(rotatePoint(new Point3D(0, 1, 0), phi));
-        //g2d.drawOval(windowOy.x - pointRadius, windowOy.y - pointRadius, 2 * pointRadius, 2 * pointRadius);
-        g2d.drawLine(windowOrigin.x, windowOrigin.y, windowOy.x, windowOy.y);
+        g2d.drawLine(windowOrigin.x, windowOrigin.y, windowY.x, windowY.y);
 
         g2d.setColor(Color.BLUE);
-        Point windowOZ = getWindowPoint(rotatePoint(new Point3D(0, 0, 1), phi));
-        //g2d.drawOval(windowOZ.x - pointRadius, windowOZ.y - pointRadius, 2 * pointRadius, 2 * pointRadius);
-        g2d.drawLine(windowOrigin.x, windowOrigin.y, windowOZ.x, windowOZ.y);
+        g2d.drawLine(windowOrigin.x, windowOrigin.y, windowZ.x, windowZ.y);
 
     }
 
     private void render(Graphics2D g2d, Object3D object3D) {
-        g2d.setColor(Color.MAGENTA);
+       object3D =  rotateObject(object3D, rotateY, rotateX);
+        g2d.setColor(Color.WHITE);
         for (Integer[] edge: object3D.edges) {
             Point a = getWindowPoint(object3D.points.get(edge[0]));
             Point b = getWindowPoint(object3D.points.get(edge[1]));
@@ -173,7 +166,8 @@ public class Viewport3D extends JPanel {
         setPreferredSize(new Dimension(width, height));
         centerX = width / 2;
         centerY = height / 2;
-        phi = 0;
+        rotateX = 0;
+        rotateY = 0;
         setBackground(Color.DARK_GRAY);
         addMouseWheelListener(new MouseAdapter() {
             @Override
@@ -186,40 +180,43 @@ public class Viewport3D extends JPanel {
 
         addMouseListener(new MouseAdapter() {
             @Override
+            public void mouseReleased(MouseEvent e) {
+                super.mouseReleased(e);
+                rotateY = 0;
+                rotateX = 0;
+
+            }
+        });
+
+        addMouseMotionListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent e) {
                 if (SwingUtilities.isLeftMouseButton(e)) {
-                    final int[] prevX = {e.getX()};
-                    addMouseMotionListener(new MouseAdapter() {
-                        @Override
-                        public void mouseDragged(MouseEvent e) {
-                            int currentX = e.getX();
-                            int dx = currentX - prevX[0];
-                            phi += dx * ANGLE_SCALE;
-                            prevX[0] = currentX;
-                            rotateObject(object3D, phi);
-                            repaint();
-                        }
-                    });
+                    super.mousePressed(e);
+                    if (SwingUtilities.isLeftMouseButton(e)) {
+                        lastX = e.getX();
+                        lastY = e.getY();
+                        repaint();
+                    }
                 }
 
             }
-        });
 
-        addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseReleased(MouseEvent e) {
-                super.mouseReleased(e);
-                pritPhi = false;
-                repaint();
+            public void mouseDragged(MouseEvent e) {
+                super.mouseDragged(e);
+                    double dx = (e.getX() - lastX) * ANGLE_SCALE;
+                    double dy = (e.getY() - lastY) * ANGLE_SCALE;
+                    rotateX += dy; // Изменение угла вдоль оси X
+                    rotateY += dx; // Изменение угла вдоль оси Y
+                    lastX = e.getX();
+                    lastX = e.getX();
+                    lastY = e.getY();
+                    repaint();
             }
         });
 
-
         axis = new Object3D();
-        object3D = new Object3D();
-        projectionMatrix = getProjectionMatrix();
-
-        // Axis
         axis.addPoint(new Point3D(0, 0, 0));
         axis.addPoint(new Point3D(1, 0, 0));
         axis.addPoint(new Point3D(0, 1, 0));
@@ -228,6 +225,11 @@ public class Viewport3D extends JPanel {
         axis.addEdge(0, 1);
         axis.addEdge(0, 2);
         axis.addEdge(0, 3);
+
+
+        object3D = new Object3D();
+        projectionMatrix = getProjectionMatrix();
+
 
         object3D.addPoint(new Point3D(2, 2, -2));
         object3D.addPoint(new Point3D(2, -2, -2));
@@ -257,11 +259,15 @@ public class Viewport3D extends JPanel {
         object3D.addEdge(2, 2 + 4);
         object3D.addEdge(3, 3 + 4);
 
-        rotateObject(object3D, 10);
+        rotateObject(object3D, rotateY, rotateX);
 
-
-
-
+        spline = new BSpline();
+        spline.referencePoints.add(0, new Point2D.Double(0, 0));
+        spline.referencePoints.add(1, new Point2D.Double(2, 1));
+        spline.referencePoints.add(2, new Point2D.Double(3, 2));
+        spline.referencePoints.add(3, new Point2D.Double(4, 3));
+        spline.caclApproximation();
+        getRotationFigure();
     }
 
 
@@ -271,14 +277,11 @@ public class Viewport3D extends JPanel {
         projectionMatrix = getProjectionMatrix();
         Graphics2D g2d = (Graphics2D) g;
         g2d.setColor(Color.white);
-        rotateObject(axis, phi);
-        drawAxis(g2d, phi);
+        drawAxis(g2d);
         render(g2d, object3D);
-        if (pritPhi) {
-            g2d.drawString(String.valueOf(phi), 100, 100);
+        if (rotationFigure != null) {
+            render(g2d, rotationFigure.object3D);
         }
-
-
     }
 
     @Override
@@ -291,7 +294,7 @@ public class Viewport3D extends JPanel {
         centerY = height / 2;
 
         if (centerY != 0) {
-            nearPlaneHeight = (int) (2 * nearPlaneZ * Math.tan(FOV / 2));
+            nearPlaneHeight = (int) (2 * nearPlaneZ);
             nearPlaneWidth = nearPlaneHeight;
         }
 

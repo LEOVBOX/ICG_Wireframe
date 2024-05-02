@@ -27,6 +27,10 @@ public class SplineViewport extends JPanel implements MouseListener {
 
     private final int pointRadius = 10;
 
+    public BSpline getSpline() {
+        return spline;
+    }
+
     public void setSettings(SplineViewportSettings settings) {
         this.settings = settings;
     }
@@ -147,20 +151,8 @@ public class SplineViewport extends JPanel implements MouseListener {
         drawBrokenLine(g2d, spline.referencePoints, pointRadius, Color.GREEN);
     }
 
-    private void drawSpline(Graphics2D g2d, int N) throws ExecutionException, InterruptedException {
-        spline.approximationPoints.clear();
-        if (N < 1) {
-            throw new IllegalArgumentException("N should be >= 1");
-        }
-        for (int i = 1; i <= spline.referencePoints.size() - 3; i++) {
-            for (int j = 0; j <= N; j++) {
-                double t = (double) j /N;
-                spline.approximationPoints.add(spline.r(t, i));
-            }
-        }
-        for (int i = 0; i < spline.approximationPoints.size(); i++) {
-            //System.out.println(splinePoints.get(i).getX() + " " + splinePoints.get(i).getY());
-        }
+    private void drawSpline(Graphics2D g2d) throws ExecutionException, InterruptedException {
+        spline.caclApproximation();
         drawBrokenLine(g2d, spline.approximationPoints, 2, Color.RED);
     }
 
@@ -209,9 +201,9 @@ public class SplineViewport extends JPanel implements MouseListener {
             g.drawOval(curX - pointRadius, curY - pointRadius, 2 * pointRadius, 2 * pointRadius);
         }
 
-        else if(spline.referencePoints.size() >= 4) {
+        if(spline.referencePoints.size() >= 4) {
             try {
-                drawSpline(g2d, spline.N);
+                drawSpline(g2d);
             } catch (ExecutionException e) {
                 throw new RuntimeException(e);
             } catch (InterruptedException e) {
@@ -271,6 +263,7 @@ public class SplineViewport extends JPanel implements MouseListener {
             isDrawing = false;
             Point windowPoint = e.getPoint();
             Point2D relativePoint = getRelativePoint(windowPoint);
+
             // Если новая опорная точка
             if (curRefPointIdx == -1) {
                 spline.referencePoints.add(relativePoint);
@@ -278,6 +271,7 @@ public class SplineViewport extends JPanel implements MouseListener {
                     settings.setK(spline.referencePoints.size());
                 }
             }
+
             repaint();
             curRefPointIdx = -1;
         }
@@ -293,6 +287,7 @@ public class SplineViewport extends JPanel implements MouseListener {
             if (settings != null) {
                 settings.setK(spline.referencePoints.size());
             }
+
             repaint();
         }
     }

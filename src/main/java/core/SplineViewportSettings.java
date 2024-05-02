@@ -6,6 +6,8 @@ import java.awt.geom.Point2D;
 
 public class SplineViewportSettings extends JPanel {
     SplineViewport splineViewport;
+
+    Viewport3D viewport3D;
     JSpinner N;
     JSpinner K;
     JSpinner SplineRed;
@@ -31,7 +33,8 @@ public class SplineViewportSettings extends JPanel {
     }
 
 
-    public SplineViewportSettings(SplineViewport splineViewport, BSpline spline) {
+    public SplineViewportSettings(SplineViewport splineViewport, BSpline spline, Viewport3D viewport3D) {
+        this.viewport3D = viewport3D;
         this.splineViewport = splineViewport;
         setBackground(Color.LIGHT_GRAY);
         setLayout(new GridLayout(4, 8, 10, 10));
@@ -91,13 +94,18 @@ public class SplineViewportSettings extends JPanel {
         JLabel m1Label = new JLabel("M1");
         m1Label.setHorizontalAlignment(SwingConstants.RIGHT);
         add(m1Label);
-        M1 = new JSpinner();
+        M1 = new JSpinner(new SpinnerNumberModel(viewport3D.M, 0, 720, 1));
         add(M1);
 
         JLabel mLabel = new JLabel("M");
         mLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         add(mLabel);
         M = new JSpinner();
+        M.addChangeListener(e -> {
+            JSpinner source = (JSpinner) e.getSource();
+            viewport3D.M = (int) source.getValue();
+        });
+
         add(M);
 
         JLabel splineGreenLabel = new JLabel("Spline green");
@@ -142,6 +150,11 @@ public class SplineViewportSettings extends JPanel {
         add(okButton);
 
         applyButton = new JButton("Apply");
+        applyButton.addActionListener(e -> {
+            viewport3D.spline = spline;
+            viewport3D.getRotationFigure();
+            viewport3D.repaint();
+        });
         add(applyButton);
 
         autoChangeButton = new JRadioButton("Auto change");

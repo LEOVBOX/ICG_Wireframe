@@ -42,4 +42,16 @@ public class BSpline {
 
         return new Point2D.Double(u, v);
     }
+    public void caclApproximation() {
+        approximationPoints.clear();
+        if (N < 1) {
+            throw new IllegalArgumentException("N should be >= 1");
+        }
+        for (int i = 1; i <= referencePoints.size() - 3; i++) {
+            for (int j = 0; j <= N; j++) {
+                double t = (double) j / N;
+                approximationPoints.add(r(t, i));
+            }
+        }
+    }
 }
