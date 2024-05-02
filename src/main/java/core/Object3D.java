@@ -3,9 +3,17 @@ package core;
 import java.util.ArrayList;
 
 class Object3D {
-    ArrayList<Point3D> points;
+    private ArrayList<Point3D> points;
 
-    ArrayList<Integer[]> edges;
+    public ArrayList<Point3D> getPoints() {
+        return points;
+    }
+
+    public ArrayList<Integer[]> getEdges() {
+        return edges;
+    }
+
+    private ArrayList<Integer[]> edges;
 
     public Object3D() {
         points = new ArrayList<>();
@@ -13,8 +21,11 @@ class Object3D {
     }
 
     public Object3D(Object3D object3D) {
-        points = object3D.points;
-        edges = object3D.edges;
+        points = new ArrayList<>();
+        for (Point3D point3D: object3D.getPoints()) {
+            points.add(new Point3D(point3D.getX(), point3D.getY(), point3D.getZ()));
+        }
+        edges = new ArrayList<>(object3D.edges);
     }
 
     public void addPoint(Point3D point) {

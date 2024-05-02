@@ -153,6 +153,8 @@ public class SplineViewportSettings extends JPanel {
         applyButton.addActionListener(e -> {
             viewport3D.spline = spline;
             viewport3D.getRotationFigure();
+            viewport3D.rotateY = 0;
+            viewport3D.rotateX = 0;
             viewport3D.repaint();
         });
         add(applyButton);

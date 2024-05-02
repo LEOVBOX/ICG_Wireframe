@@ -24,16 +24,24 @@ public class RotationFigure {
         return spline.approximationPoints.get(i).getX();
     }
 
-    public Object3D getObject3D(int M) {
+    public Point3D getRotationFigurePoint(int i, int j) {
+        double angle = Math.toRadians(Math.cos((double)(j*360)/M));
+        double cosAngle = Math.cos(angle);
+        double sinAngle = Math.sin(angle);
+        double rY = spline.approximationPoints.get(i).getY() * sinAngle;
+        double rX = spline.approximationPoints.get(i).getY() * cosAngle;
+        double rZ = spline.approximationPoints.get(i).getX();
+        return new Point3D(rX, rY, rZ);
+    }
+
+    public void getObject3D(int M) {
         object3D = new Object3D();
-        for (int j = 0; j < M; j++) {
-            for (int i = 0; i < spline.approximationPoints.size(); i++) {
-                object3D.addPoint(new Point3D(Rx(i, j), Ry(i, j), Rz(i)));
-                if (i > 0) {
-                    object3D.addEdge(j + (i-1)%(j+1), (j + i)%(j+1));
-                }
+        for (int i = 0; i < spline.approximationPoints.size(); i++) {
+            for (int j = 0; j < M; j++) {
+                object3D.addPoint(getRotationFigurePoint(i, j));
+                if (i > 0)
+                    object3D.addEdge(i-1, i);
             }
         }
-        return object3D;
     }
 }
