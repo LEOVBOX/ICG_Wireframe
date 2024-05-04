@@ -9,23 +9,23 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
 public class Viewport3D extends JPanel {
-    RotationFigure rotationFigure;
+    public Scene scene;
 
     int width, height;
 
     int nearPlaneHeight, nearPlaneWidth;
 
     // Coordinate Z of near clip plane in camera space
-    double nearPlaneZ = 1400;
+    //double nearPlaneZ = 1400;
 
     // Coordinate Z of far clip plane in camera space
-    double farPlaneZ = 2000;
+    //double farPlaneZ = 2000;
 
     double cameraZ = 10;
 
-    double rotateY, rotateX;
 
     int lastX, lastY;
+
     private final double ANGLE_SCALE = 0.01;
 
     Object3D cube;
@@ -38,9 +38,10 @@ public class Viewport3D extends JPanel {
 
     double[][] getProjectionMatrix() {
         return new double[][]{
-                {nearPlaneZ / nearPlaneWidth, 0, 0, 0},
-                {0, nearPlaneZ / nearPlaneHeight, 0, 0},
-                {0, 0, -(farPlaneZ + nearPlaneZ) / (farPlaneZ - nearPlaneZ), -(2 * farPlaneZ * nearPlaneZ) / (farPlaneZ - nearPlaneZ)},
+                {(double) scene.nearPlaneZ / nearPlaneWidth, 0, 0, 0},
+                {0, (double) scene.nearPlaneZ / nearPlaneHeight, 0, 0},
+                {0, 0, (double) -(scene.farPlaneZ + scene.nearPlaneZ) / (scene.farPlaneZ - scene.nearPlaneZ),
+                        (double) -(2 * scene.farPlaneZ * scene.nearPlaneZ) / (scene.farPlaneZ - scene.nearPlaneZ)},
                 {0, 0, -1, 0}
         };
     }
@@ -54,14 +55,14 @@ public class Viewport3D extends JPanel {
     Point getWindowPoint(Point3D point3D) {
         Point3D ndcPoint = getNDCPoint(point3D);
         int x = (int)(centerX + nearPlaneWidth * ndcPoint.getX());
-        int y = (int)( centerY - nearPlaneHeight * ndcPoint.getY());
+        int y = (int)(centerY - nearPlaneHeight * ndcPoint.getY());
         return new Point(x, y);
     }
 
     //private Object3D normalize() {}
 
     private void drawAxis(Graphics2D g2d) {
-        Object3D rotatedAxis = axis.rotateObject(rotateX, rotateY);
+        Object3D rotatedAxis = axis.rotateObject(scene.rotateX, scene.rotateY);
 
         Point windowOrigin = getWindowPoint(rotatedAxis.getPoints().get(0));
         Point windowX = getWindowPoint(rotatedAxis.getPoints().get(1));
@@ -76,12 +77,6 @@ public class Viewport3D extends JPanel {
 
         g2d.setColor(Color.BLUE);
         g2d.drawLine(windowOrigin.x, windowOrigin.y, windowZ.x, windowZ.y);
-    }
-
-    public void resetAngles() {
-        rotateY = 0;
-        rotateX = 0;
-        repaint();
     }
 
     Object3D createCube() {
@@ -131,7 +126,7 @@ public class Viewport3D extends JPanel {
     }
 
     private void render(Graphics2D g2d, Object3D object3D, int pointRadius, Color color) {
-        Object3D renderObject = object3D.rotateObject(rotateX, rotateY);
+        Object3D renderObject = object3D.rotateObject(scene.rotateX, scene.rotateY);
 
         g2d.setColor(color);
         for (Integer[] edge: renderObject.getEdges()) {
@@ -143,12 +138,11 @@ public class Viewport3D extends JPanel {
         }
     }
 
-    public Viewport3D(int width, int height, RotationFigure rotationFigure) {
+    public Viewport3D(int width, int height, Scene scene) {
+        this.scene = scene;
         setPreferredSize(new Dimension(width, height));
         centerX = width / 2;
         centerY = height / 2;
-        rotateX = 0;
-        rotateY = 0;
 
         setBackground(Color.DARK_GRAY);
 
@@ -156,7 +150,7 @@ public class Viewport3D extends JPanel {
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
                 super.mouseWheelMoved(e);
-                nearPlaneZ += e.getWheelRotation();
+                scene.nearPlaneZ += e.getWheelRotation();
                 repaint();
             }
         });
@@ -176,8 +170,8 @@ public class Viewport3D extends JPanel {
                 super.mouseDragged(e);
                     double dx = (e.getX() - lastX) * ANGLE_SCALE;
                     double dy = (e.getY() - lastY) * ANGLE_SCALE;
-                    rotateX += dy; // Изменение угла вдоль оси X
-                    rotateY += dx; // Изменение угла вдоль оси Y
+                    scene.rotateX += dy; // Изменение угла вдоль оси X
+                    scene.rotateY += dx; // Изменение угла вдоль оси Y
                     lastX = e.getX();
                     lastY = e.getY();
                     repaint();
@@ -186,13 +180,8 @@ public class Viewport3D extends JPanel {
 
         axis = createAxis();
         cube = createCube();
-        this.rotationFigure = rotationFigure;
 
         projectionMatrix = getProjectionMatrix();
-    }
-
-    public void generateRotationFigure() {
-        rotationFigure.getObject3D();
     }
 
     @Override
@@ -208,8 +197,8 @@ public class Viewport3D extends JPanel {
         //g.drawString("Zn: " + nearPlaneZ, 50, 50);
         //g.drawString("Zf: " + farPlaneZ, 50 ,20);
 
-        if (rotationFigure.object3D != null) {
-            render(g2d, rotationFigure.object3D, 2, Color.WHITE);
+        if (scene.rotationFigure.object3D != null) {
+            render(g2d, scene.rotationFigure.object3D, 2, Color.WHITE);
         }
         else {
             render(g2d, cube, 0, Color.LIGHT_GRAY);
@@ -226,7 +215,7 @@ public class Viewport3D extends JPanel {
         centerY = height / 2;
 
         if (centerY != 0) {
-            nearPlaneHeight = (int) (2 * nearPlaneZ);
+            nearPlaneHeight = 2 * scene.nearPlaneZ;
             nearPlaneWidth = nearPlaneHeight;
         }
 

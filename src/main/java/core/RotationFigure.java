@@ -1,8 +1,5 @@
 package core;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
@@ -11,7 +8,11 @@ public class RotationFigure {
     public Object3D object3D;
     public int M;
 
-    public RotationFigure() {}
+    public RotationFigure() {
+        this.spline = new BSpline();
+        this.object3D = new Object3D();
+        this.M = 4;
+    }
 
     public RotationFigure(int M, BSpline spline) {
         this.M = M;
@@ -20,6 +21,14 @@ public class RotationFigure {
 
     public BSpline getSpline() {
         return spline;
+    }
+
+    public void setSpline(BSpline spline) {
+        this.spline = spline;
+    }
+
+    public void setM(int M) {
+        this.M = M;
     }
 
     public Point3D getRotatedPoint(Point2D point, int j) {
@@ -62,15 +71,4 @@ public class RotationFigure {
         object3D = object3D.normalize();
     }
 
-    // Сериализация в JSON
-    public String toJson() {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        return gson.toJson(this);
-    }
-
-    // Восстановление объекта из JSON
-    public static RotationFigure fromJson(String json) {
-        Gson gson = new Gson();
-        return gson.fromJson(json, RotationFigure.class);
-    }
 }

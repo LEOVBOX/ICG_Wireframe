@@ -102,10 +102,10 @@ public class SplineViewportSettings extends JPanel {
         JLabel mLabel = new JLabel("M");
         mLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         add(mLabel);
-        M = new JSpinner(new SpinnerNumberModel(viewport3D.rotationFigure.M, 0, 720, 1));
+        M = new JSpinner(new SpinnerNumberModel(viewport3D.scene.rotationFigure.M, 0, 720, 1));
         M.addChangeListener(e -> {
             JSpinner source = (JSpinner) e.getSource();
-            viewport3D.rotationFigure.M = (int) source.getValue();
+            viewport3D.scene.rotationFigure.M = (int) source.getValue();
         });
 
         add(M);
@@ -157,9 +157,9 @@ public class SplineViewportSettings extends JPanel {
                 JOptionPane.showMessageDialog(this, "K should be more then 4");
             }
             else {
-                viewport3D.rotationFigure.spline = new BSpline(splineViewport.getSpline());
-                viewport3D.rotationFigure.M = (int)M.getValue();
-                viewport3D.rotationFigure.getObject3D();
+                viewport3D.scene.rotationFigure.setSpline(new BSpline(splineViewport.getSpline()));
+                viewport3D.scene.rotationFigure.setM((int)M.getValue());
+                viewport3D.scene.rotationFigure.getObject3D();
                 viewport3D.repaint();
             }
 
