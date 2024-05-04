@@ -31,6 +31,10 @@ public class SplineViewport extends JPanel implements MouseListener {
         return spline;
     }
 
+    public void setSpline(BSpline spline) {
+        this.spline = spline;
+    }
+
     public void setSettings(SplineViewportSettings settings) {
         this.settings = settings;
     }
@@ -126,10 +130,10 @@ public class SplineViewport extends JPanel implements MouseListener {
         }
     }
 
-    private void drawBrokenLine(Graphics2D g2d, ArrayList<Point2D> points, int pointRadius, Color color) {
+    private void drawBrokenLine(Graphics2D g2d, ArrayList<Point2D.Double> points, int pointRadius, Color color) {
         if (points != null) {
             Point prevPoint = null;
-            for (Point2D point : points) {
+            for (Point2D.Double point : points) {
                 Point winodwPoint = getWindowPoint(point);
                 if (winodwPoint.x < width && winodwPoint.y < width) {
                     g2d.setColor(color);
@@ -156,7 +160,7 @@ public class SplineViewport extends JPanel implements MouseListener {
         drawBrokenLine(g2d, spline.approximationPoints, 2, Color.RED);
     }
 
-    private Point2D getRelativePoint(Point windowPoint) {
+    private Point2D.Double getRelativePoint(Point windowPoint) {
         double windowX = windowPoint.getX();
         double windowY = windowPoint.getY();
 
@@ -204,9 +208,7 @@ public class SplineViewport extends JPanel implements MouseListener {
         if(spline.referencePoints.size() >= 4) {
             try {
                 drawSpline(g2d);
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e);
-            } catch (InterruptedException e) {
+            } catch (ExecutionException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -262,7 +264,7 @@ public class SplineViewport extends JPanel implements MouseListener {
         if (e.getButton() == MouseEvent.BUTTON1) {
             isDrawing = false;
             Point windowPoint = e.getPoint();
-            Point2D relativePoint = getRelativePoint(windowPoint);
+            Point2D.Double relativePoint = getRelativePoint(windowPoint);
 
             // Если новая опорная точка
             if (curRefPointIdx == -1) {

@@ -8,11 +8,20 @@ import java.util.ArrayList;
 import static java.lang.Math.pow;
 
 public class BSpline {
-    ArrayList<Point2D> referencePoints;
+    ArrayList<Point2D.Double> referencePoints;
 
-    ArrayList<Point2D> approximationPoints;
+    ArrayList<Point2D.Double> approximationPoints;
 
     int N;
+
+    public void setN(int n) {
+        N = n;
+    }
+
+    public int getN() {
+        return N;
+    }
+
     static final double[][] Ms = {
             {-1/6.0, 0.5, -0.5, 1/6.0},
             {0.5, -1, 0.5, 0},
@@ -25,6 +34,13 @@ public class BSpline {
         referencePoints = new ArrayList<>();
         approximationPoints = new ArrayList<>();
         this.N = 1;
+    }
+
+    public BSpline(BSpline spline) {
+        this.approximationPoints = new ArrayList<>(spline.approximationPoints);
+        this.referencePoints = new ArrayList<>(spline.referencePoints);
+        this.N = spline.N;
+
     }
 
     Point2D.Double r(double t, int i) {

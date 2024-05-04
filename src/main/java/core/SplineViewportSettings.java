@@ -6,7 +6,6 @@ import java.awt.geom.Point2D;
 
 public class SplineViewportSettings extends JPanel {
     SplineViewport splineViewport;
-
     Viewport3D viewport3D;
     JSpinner N;
     JSpinner K;
@@ -28,14 +27,17 @@ public class SplineViewportSettings extends JPanel {
     JButton zoomMinusButton;
     JButton clearButton;
 
+    BSpline spline;
+
     void setK(int K) {
         this.K.setValue(K);
     }
 
 
-    public SplineViewportSettings(SplineViewport splineViewport, BSpline spline, Viewport3D viewport3D) {
+    public SplineViewportSettings(SplineViewport splineViewport, Viewport3D viewport3D) {
         this.viewport3D = viewport3D;
         this.splineViewport = splineViewport;
+        this.spline = splineViewport.getSpline();
         setBackground(Color.LIGHT_GRAY);
         setLayout(new GridLayout(4, 8, 10, 10));
 
@@ -43,11 +45,11 @@ public class SplineViewportSettings extends JPanel {
         JLabel nLabel = new JLabel("N");
         nLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         add(nLabel);
-        N = new JSpinner(new SpinnerNumberModel(spline.N, 1, 500, 1));
+        N = new JSpinner(new SpinnerNumberModel(splineViewport.getSpline().getN(), 1, 500, 1));
         N.addChangeListener(e -> {
             JSpinner source = (JSpinner) e.getSource();
             int value = (int) source.getValue();
-            spline.N = value;
+            splineViewport.getSpline().setN(value);
             splineViewport.repaint();
         });
         add(N);
@@ -56,20 +58,20 @@ public class SplineViewportSettings extends JPanel {
         JLabel kLabel = new JLabel("K");
         kLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         add(kLabel);
-        K = new JSpinner(new SpinnerNumberModel(spline.referencePoints.size(), 0, 300, 1));
+        K = new JSpinner(new SpinnerNumberModel(splineViewport.getSpline().referencePoints.size(), 0, 300, 1));
         K.addChangeListener(e -> {
             JSpinner source = (JSpinner) e.getSource();
             int value = (int) source.getValue();
-            for (int i = 0; i < Math.abs(spline.referencePoints.size() - value); i++) {
-                if (value < spline.referencePoints.size()) {
-                    spline.referencePoints.remove(spline.referencePoints.getLast());
+            for (int i = 0; i < Math.abs(splineViewport.getSpline().referencePoints.size() - value); i++) {
+                if (value < splineViewport.getSpline().referencePoints.size()) {
+                    splineViewport.getSpline().referencePoints.remove(splineViewport.getSpline().referencePoints.getLast());
                 }
                 else {
-                    if (spline.referencePoints.isEmpty()) {
-                        spline.referencePoints.add(new Point2D.Double(0, 0));
+                    if (splineViewport.getSpline().referencePoints.isEmpty()) {
+                        splineViewport.getSpline().referencePoints.add(new Point2D.Double(0, 0));
                     }
                     else{
-                        spline.referencePoints.add(new Point2D.Double(spline.referencePoints.getLast().getX() + 1, 0));
+                        splineViewport.getSpline().referencePoints.add(new Point2D.Double(splineViewport.getSpline().referencePoints.getLast().getX() + 1, 0));
                     }
                 }
             }
@@ -94,16 +96,16 @@ public class SplineViewportSettings extends JPanel {
         JLabel m1Label = new JLabel("M1");
         m1Label.setHorizontalAlignment(SwingConstants.RIGHT);
         add(m1Label);
-        M1 = new JSpinner(new SpinnerNumberModel(viewport3D.M, 0, 720, 1));
+        M1 = new JSpinner();
         add(M1);
 
         JLabel mLabel = new JLabel("M");
         mLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         add(mLabel);
-        M = new JSpinner();
+        M = new JSpinner(new SpinnerNumberModel(viewport3D.rotationFigure.M, 0, 720, 1));
         M.addChangeListener(e -> {
             JSpinner source = (JSpinner) e.getSource();
-            viewport3D.M = (int) source.getValue();
+            viewport3D.rotationFigure.M = (int) source.getValue();
         });
 
         add(M);
@@ -151,11 +153,16 @@ public class SplineViewportSettings extends JPanel {
 
         applyButton = new JButton("Apply");
         applyButton.addActionListener(e -> {
-            viewport3D.spline = spline;
-            viewport3D.getRotationFigure();
-            viewport3D.rotateY = 0;
-            viewport3D.rotateX = 0;
-            viewport3D.repaint();
+            if ((int)K.getValue() < 4) {
+                JOptionPane.showMessageDialog(this, "K should be more then 4");
+            }
+            else {
+                viewport3D.rotationFigure.spline = new BSpline(splineViewport.getSpline());
+                viewport3D.rotationFigure.M = (int)M.getValue();
+                viewport3D.rotationFigure.getObject3D();
+                viewport3D.repaint();
+            }
+
         });
         add(applyButton);
 
@@ -173,7 +180,7 @@ public class SplineViewportSettings extends JPanel {
 
         clearButton = new JButton("clear");
         clearButton.addActionListener(e -> {
-            spline.referencePoints.clear();
+            splineViewport.getSpline().referencePoints.clear();
             splineViewport.repaint();
             K.setValue(0);
         });
