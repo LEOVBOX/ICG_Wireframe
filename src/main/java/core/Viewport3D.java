@@ -192,17 +192,20 @@ public class Viewport3D extends JPanel {
         g2d.setColor(Color.white);
         drawAxis(g2d);
         g2d.setColor(Color.GREEN);
-        //g.drawString("rotateX: " + rotateX, 100, 100);
-        //g.drawString("rotateY: " + rotateY, 100, 200);
-        //g.drawString("Zn: " + nearPlaneZ, 50, 50);
-        //g.drawString("Zf: " + farPlaneZ, 50 ,20);
 
         if (scene.rotationFigure.object3D != null) {
-            render(g2d, scene.rotationFigure.object3D, 2, Color.WHITE);
+            render(g2d, scene.rotationFigure.object3D, 1, Color.WHITE);
         }
         else {
             render(g2d, cube, 0, Color.LIGHT_GRAY);
         }
+    }
+
+    public void update() {
+        if (scene.rotationFigure != null){
+            scene.rotationFigure.getObject3D();
+        }
+        repaint();
     }
 
     @Override

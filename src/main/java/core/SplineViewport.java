@@ -269,9 +269,12 @@ public class SplineViewport extends JPanel implements MouseListener {
             // Если новая опорная точка
             if (curRefPointIdx == -1) {
                 spline.referencePoints.add(relativePoint);
-                if (settings != null) {
-                    settings.setK(spline.referencePoints.size());
-                }
+            }
+
+            if (settings != null) {
+                settings.setK(spline.referencePoints.size());
+                settings.viewport3D.scene.rotationFigure.getObject3D();
+                settings.viewport3D.repaint();
             }
 
             repaint();
@@ -286,8 +289,11 @@ public class SplineViewport extends JPanel implements MouseListener {
                     break;
                 }
             }
+
             if (settings != null) {
                 settings.setK(spline.referencePoints.size());
+                settings.viewport3D.scene.rotationFigure.getObject3D();
+                settings.viewport3D.repaint();
             }
 
             repaint();

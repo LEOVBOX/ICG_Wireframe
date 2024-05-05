@@ -15,12 +15,23 @@ public class MainWindow extends JFrame {
     private void openSplineEditor() {
             if (splineEditorWindow == null) {
                 splineEditorWindow = new SplineEditorWindow(this);
-                splineEditorWindow.splineViewport.setSpline(new BSpline(this.scene.rotationFigure.getSpline()));
+                if (scene.isAutoChange) {
+                    splineEditorWindow.splineViewport.setSpline(scene.rotationFigure.getSpline());
+                }
+                else {
+                    splineEditorWindow.splineViewport.setSpline(new BSpline(this.scene.rotationFigure.getSpline()));
+                }
+
                 splineEditorWindow.splineViewport.repaint();
             }
 
             else {
-                splineEditorWindow.splineViewport.setSpline(new BSpline(this.scene.rotationFigure.getSpline()));
+                if (scene.isAutoChange) {
+                    splineEditorWindow.splineViewport.setSpline(scene.rotationFigure.getSpline());
+                }
+                else {
+                    splineEditorWindow.splineViewport.setSpline(new BSpline(this.scene.rotationFigure.getSpline()));
+                }
                 splineEditorWindow.setVisible(true);
                 splineEditorWindow.splineViewport.repaint();
             }

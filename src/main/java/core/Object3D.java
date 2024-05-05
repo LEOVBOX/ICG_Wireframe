@@ -1,7 +1,5 @@
 package core;
 
-import LinearAlgebra.MatrixUtils;
-
 import java.util.ArrayList;
 
 class Object3D {
@@ -117,33 +115,10 @@ class Object3D {
         return result;
     }
 
-    double[][] getYRotationMatrix(double phi) {
-        return new double[][]{
-                {Math.cos(phi), 0, Math.sin(phi)},
-                {0, 1, 0},
-                {-Math.sin(phi), 0, Math.cos(phi)}
-        };
-    }
-
-    double[][] getXRotationMatrix(double theta) {
-        return new double[][]{
-                {1, 0, 0},
-                {0, Math.cos(theta), -Math.sin(theta)},
-                {0, Math.sin(theta), Math.cos(theta)}
-        };
-    }
-
-    private Point3D rotatePoint(Point3D point3D, double rotateX, double rotateY) {
-        double[] cords = {point3D.getX(), point3D.getY(), point3D.getZ()};
-        cords = MatrixUtils.multiply(getYRotationMatrix(rotateY), cords, false);
-        cords = MatrixUtils.multiply(getXRotationMatrix(rotateX), cords, false);
-        return new Point3D(cords[0], cords[1], cords[2]);
-    }
-
     public Object3D rotateObject(double rotateX, double rotateY) {
         Object3D result = new Object3D(this);
         for (Point3D point3D : result.getPoints()) {
-            point3D.setLocation(rotatePoint(point3D, rotateX, rotateY));
+            point3D.setLocation(point3D.rotate(rotateX, rotateY, 0));
         }
         return result;
     }

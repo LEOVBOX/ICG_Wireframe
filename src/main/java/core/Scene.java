@@ -10,6 +10,8 @@ public class Scene {
     public Double rotateX = 0.0;
     public Double rotateY = 0.0;
 
+    public boolean isAutoChange = false;
+
     public Scene() {
         rotationFigure = new RotationFigure();
     }

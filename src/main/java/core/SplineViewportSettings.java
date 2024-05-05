@@ -51,6 +51,9 @@ public class SplineViewportSettings extends JPanel {
             int value = (int) source.getValue();
             splineViewport.getSpline().setN(value);
             splineViewport.repaint();
+            if (viewport3D.scene.isAutoChange) {
+                viewport3D.update();
+            }
         });
         add(N);
 
@@ -58,10 +61,12 @@ public class SplineViewportSettings extends JPanel {
         JLabel kLabel = new JLabel("K");
         kLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         add(kLabel);
-        K = new JSpinner(new SpinnerNumberModel(splineViewport.getSpline().referencePoints.size(), 0, 300, 1));
+        K = new JSpinner(new SpinnerNumberModel(viewport3D.scene.rotationFigure.getSpline().referencePoints.size(), 0, 300, 1));
         K.addChangeListener(e -> {
             JSpinner source = (JSpinner) e.getSource();
             int value = (int) source.getValue();
+
+            // Добавление и удаление точек сплайна при изменении значения K
             for (int i = 0; i < Math.abs(splineViewport.getSpline().referencePoints.size() - value); i++) {
                 if (value < splineViewport.getSpline().referencePoints.size()) {
                     splineViewport.getSpline().referencePoints.remove(splineViewport.getSpline().referencePoints.getLast());
@@ -96,16 +101,26 @@ public class SplineViewportSettings extends JPanel {
         JLabel m1Label = new JLabel("M1");
         m1Label.setHorizontalAlignment(SwingConstants.RIGHT);
         add(m1Label);
-        M1 = new JSpinner();
+        M1 = new JSpinner(new SpinnerNumberModel(viewport3D.scene.rotationFigure.getM1(), 1, 360, 1));
+        M1.addChangeListener(e -> {
+            JSpinner source = (JSpinner) e.getSource();
+            viewport3D.scene.rotationFigure.setM1((int)source.getValue());
+            if (viewport3D.scene.isAutoChange) {
+                viewport3D.update();
+            }
+        });
         add(M1);
 
         JLabel mLabel = new JLabel("M");
         mLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         add(mLabel);
-        M = new JSpinner(new SpinnerNumberModel(viewport3D.scene.rotationFigure.M, 0, 720, 1));
+        M = new JSpinner(new SpinnerNumberModel(viewport3D.scene.rotationFigure.getM(), 2, 360, 1));
         M.addChangeListener(e -> {
             JSpinner source = (JSpinner) e.getSource();
-            viewport3D.scene.rotationFigure.M = (int) source.getValue();
+            viewport3D.scene.rotationFigure.setM((int) source.getValue());
+            if (viewport3D.scene.isAutoChange) {
+                viewport3D.update();
+            }
         });
 
         add(M);
@@ -149,6 +164,7 @@ public class SplineViewportSettings extends JPanel {
 
         // 4 ROW
         okButton = new JButton("OK");
+        okButton.addActionListener(e -> this.getParent());
         add(okButton);
 
         applyButton = new JButton("Apply");
@@ -156,7 +172,7 @@ public class SplineViewportSettings extends JPanel {
             if ((int)K.getValue() < 4) {
                 JOptionPane.showMessageDialog(this, "K should be more then 4");
             }
-            else {
+            else if (!viewport3D.scene.isAutoChange){
                 viewport3D.scene.rotationFigure.setSpline(new BSpline(splineViewport.getSpline()));
                 viewport3D.scene.rotationFigure.setM((int)M.getValue());
                 viewport3D.scene.rotationFigure.getObject3D();
@@ -167,6 +183,24 @@ public class SplineViewportSettings extends JPanel {
         add(applyButton);
 
         autoChangeButton = new JRadioButton("Auto change");
+        if (viewport3D.scene.isAutoChange) {
+            autoChangeButton.setSelected(true);
+        }
+        autoChangeButton.addActionListener(e -> {
+            viewport3D.scene.isAutoChange = autoChangeButton.isSelected();
+            if (autoChangeButton.isSelected()) {
+                splineViewport.spline = viewport3D.scene.rotationFigure.getSpline();
+                splineViewport.repaint();
+                viewport3D.scene.rotationFigure.getObject3D();
+                viewport3D.repaint();
+            }
+            else {
+                splineViewport.setSpline(new BSpline(viewport3D.scene.rotationFigure.getSpline()));
+                splineViewport.repaint();
+                viewport3D.scene.rotationFigure.getObject3D();
+                viewport3D.repaint();
+            }
+        });
         add(autoChangeButton);
 
         normalizeButton = new JButton("Normalize");

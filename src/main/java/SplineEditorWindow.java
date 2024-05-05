@@ -1,3 +1,4 @@
+import core.BSpline;
 import core.SplineViewport;
 import core.SplineViewportSettings;
 
@@ -5,17 +6,17 @@ import javax.swing.*;
 import java.awt.*;
 
 public class SplineEditorWindow extends JFrame {
-    MainWindow mainWindow;
+    BSpline uvSpline;
     SplineViewport splineViewport;
     SplineViewportSettings splineViewportSettings;
     public SplineEditorWindow(MainWindow mainWindow) {
         super("Spline editor");
-        this.mainWindow = mainWindow;
         try {
             setPreferredSize(new Dimension(640, 480));
             setLocation(0, 0);
             setDefaultCloseOperation(HIDE_ON_CLOSE);
             setLayout(new BorderLayout());
+            uvSpline = new BSpline();
 
             splineViewport = new SplineViewport(getWidth(), getHeight());
             add(splineViewport);
