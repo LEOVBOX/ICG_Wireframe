@@ -20,7 +20,11 @@ public class SplineViewport extends JPanel implements MouseListener {
 
     private int curX, curY;
 
+    //private int lastX, lastY;
+
     private int curRefPointIdx;
+
+    //private boolean isMoving = false;
 
     // length in pix
     private final int divisionLength = 50;
@@ -63,6 +67,16 @@ public class SplineViewport extends JPanel implements MouseListener {
                     }
                     repaint();
                 }
+                /*if (SwingUtilities.isRightMouseButton(e)) {
+                    double dx = (lastX - e.getX()) * 0.01;
+                    double dy = (lastY - e.getY()) * 0.01;
+                    centerX += dx; // Изменение угла вдоль оси X
+                    centerY += dy; // Изменение угла вдоль оси Y
+
+                    lastX = e.getX();
+                    lastY = e.getY();
+                    repaint();
+                }*/
             }
         });
     }
@@ -83,22 +97,18 @@ public class SplineViewport extends JPanel implements MouseListener {
         int xSpacing = width / xDivisions;
         int ySpacing = height / yDivisions;
 
+        // Расчет смещения сетки
+        int offsetX = centerX % xSpacing;
+        int offsetY = centerY % ySpacing;
+
         // Рисование линий сетки по вертикали и делений на оси x
         for (int i = 1; i < xDivisions; i++) {
-            int x = i * xSpacing;
-            if ((i - xDivisions / 2 != 0) || (i - xDivisions / 2 < width))
-            {
+            int x = i * xSpacing - offsetX;
+            if ((i - xDivisions / 2 != 0) && (i - xDivisions / 2 < width)) {
                 g2d.setColor(Color.DARK_GRAY);
-                g2d.drawLine(centerX - x, 0, centerX - x, height);
+                g2d.drawLine(x, 0, x, height);
                 g2d.setColor(Color.LIGHT_GRAY);
-                g2d.drawLine(centerX - x, centerY - 4, centerX - x, centerY + 4);
-                if (centerX + x < width) {
-                    g2d.setColor(Color.DARK_GRAY);
-                    g2d.drawLine(centerX + x, 0, centerX + x, height);
-                    g2d.setColor(Color.LIGHT_GRAY);
-                    g2d.drawLine(centerX + x, centerY - 4, centerX + x, centerY + 4);
-                }
-
+                g2d.drawLine(x, centerY - 4, x, centerY + 4);
                 g2d.setColor(Color.DARK_GRAY);
             }
 
@@ -109,19 +119,12 @@ public class SplineViewport extends JPanel implements MouseListener {
         // Рисование линий сетки по горизонтали и делений на оси y
         for (int i = 1; i < yDivisions; i++) {
             // Начинаем рисовать из середины экрана
-            int y = i * ySpacing;
-            if ((i - yDivisions / 2 != 0) || (i - yDivisions / 2 < height)) {
+            int y = i * ySpacing - offsetY;
+            if ((i - yDivisions / 2 != 0) && (i - yDivisions / 2 < height)) {
                 g2d.setColor(Color.DARK_GRAY);
-                g2d.drawLine(0, centerY - y, width, centerY - y);
+                g2d.drawLine(0, y, width, y);
                 g2d.setColor(Color.LIGHT_GRAY);
-                g2d.drawLine(centerX - 4, centerY - y, centerX + 4, centerY - y);
-                if (centerY + y < height) {
-                    g2d.setColor(Color.DARK_GRAY);
-                    g2d.drawLine(0, centerY + y, width, centerY + y);
-                    g2d.setColor(Color.LIGHT_GRAY);
-                    g2d.drawLine(centerX - 4, centerY + y, centerX + 4, centerY + y);
-                }
-
+                g2d.drawLine(centerX - 4, y, centerX + 4, y);
                 g2d.setColor(Color.DARK_GRAY);
             }
 
@@ -213,6 +216,7 @@ public class SplineViewport extends JPanel implements MouseListener {
             }
         }
 
+
     }
 
     // Метод для установки размера окна
@@ -247,22 +251,27 @@ public class SplineViewport extends JPanel implements MouseListener {
             for (Point2D referencePoint: spline.referencePoints) {
                 if (isReferencePoint(referencePoint, curPoint)) {
                     curRefPointIdx = spline.referencePoints.indexOf(referencePoint);
+                    isDrawing = true;
                     break;
                 }
             }
 
-            isDrawing = true;
             curX = e.getX();
             curY = e.getY();
 
             repaint();
+        }
+        else if (e.getButton() == MouseEvent.BUTTON3) {
+            //isMoving = true;
+            /*lastX = e.getX();
+            lastY = e.getY();*/
         }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
         if (e.getButton() == MouseEvent.BUTTON1) {
-            isDrawing = false;
+
             Point windowPoint = e.getPoint();
             Point2D.Double relativePoint = getRelativePoint(windowPoint);
 
@@ -273,12 +282,16 @@ public class SplineViewport extends JPanel implements MouseListener {
 
             if (settings != null) {
                 settings.setK(spline.referencePoints.size());
-                settings.viewport3D.scene.rotationFigure.getObject3D();
-                settings.viewport3D.repaint();
+                if (spline.referencePoints.size() >= 4) {
+                    settings.viewport3D.update();
+                }
             }
+
 
             repaint();
             curRefPointIdx = -1;
+            isDrawing = false;
+            //isMoving = false;
         }
 
         if (e.getButton() == MouseEvent.BUTTON3) {
@@ -292,9 +305,12 @@ public class SplineViewport extends JPanel implements MouseListener {
 
             if (settings != null) {
                 settings.setK(spline.referencePoints.size());
-                settings.viewport3D.scene.rotationFigure.getObject3D();
-                settings.viewport3D.repaint();
+                settings.viewport3D.update();
             }
+
+            //isMoving = false;
+            /*lastX = e.getX();
+            lastY = e.getY();*/
 
             repaint();
         }

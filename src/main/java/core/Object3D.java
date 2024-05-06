@@ -41,7 +41,7 @@ class Object3D {
     }
 
     // [minCord, maxCord]
-    private ArrayList<Point3D> calcDimensionalBox() {
+    public ArrayList<Point3D> calcDimensionalBox() {
         if (points.isEmpty()) {
             throw new IllegalArgumentException("For calculation dimensional box needed at least 1 point");
         }

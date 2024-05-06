@@ -7,6 +7,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.util.ArrayList;
 
 public class Viewport3D extends JPanel {
     public Scene scene;
@@ -35,6 +36,10 @@ public class Viewport3D extends JPanel {
     int centerX, centerY;
 
     double[][] projectionMatrix;
+
+    public void setScene(Scene scene) {
+        this.scene = scene;
+    }
 
     double[][] getProjectionMatrix() {
         return new double[][]{
@@ -125,15 +130,56 @@ public class Viewport3D extends JPanel {
         return axis;
     }
 
+
     private void render(Graphics2D g2d, Object3D object3D, int pointRadius, Color color) {
         Object3D renderObject = object3D.rotateObject(scene.rotateX, scene.rotateY);
+        ArrayList<Point3D> dimensionalBox = renderObject.calcDimensionalBox();
+
+        double minZ = dimensionalBox.getFirst().getZ();
+        double maxZ = dimensionalBox.getLast().getZ();
 
         g2d.setColor(color);
-        for (Integer[] edge: renderObject.getEdges()) {
-            Point a = getWindowPoint(renderObject.getPoints().get(edge[0]));
+        for (Integer[] edge : renderObject.getEdges()) {
+            Point3D beginPoint = renderObject.getPoints().get(edge[0]);
+            Point a = getWindowPoint(beginPoint);
+            double beginZ = beginPoint.getZ(); // не нужно вычитать minZ
+
             g2d.drawOval(a.x - pointRadius, a.y - pointRadius, 2 * pointRadius, 2 * pointRadius);
-            Point b = getWindowPoint(renderObject.getPoints().get(edge[1]));
+
+            Point3D endPoint = renderObject.getPoints().get(edge[1]);
+            Point b = getWindowPoint(endPoint);
+            double endZ = endPoint.getZ(); // не нужно вычитать minZ
+
             g2d.drawOval(b.x - pointRadius, b.y - pointRadius, 2 * pointRadius, 2 * pointRadius);
+
+            // Пересчитываем координаты относительно начала координат
+            double beginC = beginZ - minZ;
+            double endC = endZ - minZ;
+
+            // Обновляем значения minZ и maxZ
+            minZ = Math.min(minZ, beginZ);
+            maxZ = Math.max(maxZ, beginZ);
+            minZ = Math.min(minZ, endZ);
+            maxZ = Math.max(maxZ, endZ);
+
+            // Нормализуем значения оттенков серого
+            double normalizedBeginC = (beginC - minZ) / (maxZ - minZ);
+            double normalizedEndC = (endC - minZ) / (maxZ - minZ);
+
+            // Преобразуем оттенки серого в диапазон от 0 до 255
+            int beginGradient = (int) (normalizedBeginC * 255);
+            int endGradient = (int) (normalizedEndC * 255);
+
+            beginGradient = Math.max(0, Math.min(255, beginGradient));
+            endGradient = Math.max(0, Math.min(255, endGradient));
+
+            // Создаем градиентный цвет
+            GradientPaint gradientPaint = new GradientPaint(b.x, b.y, new Color(endGradient, endGradient, endGradient), a.x, a.y, new Color(beginGradient, beginGradient, beginGradient));
+
+            // Устанавливаем градиентный цвет как кисть для рисования линии
+            g2d.setPaint(gradientPaint);
+
+            // Рисуем линию с градиентным цветом
             g2d.drawLine(a.x, a.y, b.x, b.y);
         }
     }
@@ -194,7 +240,7 @@ public class Viewport3D extends JPanel {
         g2d.setColor(Color.GREEN);
 
         if (scene.rotationFigure.object3D != null) {
-            render(g2d, scene.rotationFigure.object3D, 1, Color.WHITE);
+            render(g2d, scene.rotationFigure.object3D, 0, Color.WHITE);
         }
         else {
             render(g2d, cube, 0, Color.LIGHT_GRAY);

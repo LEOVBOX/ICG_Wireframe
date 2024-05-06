@@ -27,17 +27,14 @@ public class SplineViewportSettings extends JPanel {
     JButton zoomMinusButton;
     JButton clearButton;
 
-    BSpline spline;
 
     void setK(int K) {
         this.K.setValue(K);
     }
 
-
     public SplineViewportSettings(SplineViewport splineViewport, Viewport3D viewport3D) {
         this.viewport3D = viewport3D;
         this.splineViewport = splineViewport;
-        this.spline = splineViewport.getSpline();
         setBackground(Color.LIGHT_GRAY);
         setLayout(new GridLayout(4, 8, 10, 10));
 
@@ -45,7 +42,7 @@ public class SplineViewportSettings extends JPanel {
         JLabel nLabel = new JLabel("N");
         nLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         add(nLabel);
-        N = new JSpinner(new SpinnerNumberModel(splineViewport.getSpline().getN(), 1, 500, 1));
+        N = new JSpinner(new SpinnerNumberModel(viewport3D.scene.rotationFigure.getSpline().getN(), 1, 500, 1));
         N.addChangeListener(e -> {
             JSpinner source = (JSpinner) e.getSource();
             int value = (int) source.getValue();
@@ -61,7 +58,7 @@ public class SplineViewportSettings extends JPanel {
         JLabel kLabel = new JLabel("K");
         kLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         add(kLabel);
-        K = new JSpinner(new SpinnerNumberModel(viewport3D.scene.rotationFigure.getSpline().referencePoints.size(), 0, 300, 1));
+        K = new JSpinner(new SpinnerNumberModel(splineViewport.getSpline().referencePoints.size(), 0, 300, 1));
         K.addChangeListener(e -> {
             JSpinner source = (JSpinner) e.getSource();
             int value = (int) source.getValue();
@@ -70,15 +67,16 @@ public class SplineViewportSettings extends JPanel {
             for (int i = 0; i < Math.abs(splineViewport.getSpline().referencePoints.size() - value); i++) {
                 if (value < splineViewport.getSpline().referencePoints.size()) {
                     splineViewport.getSpline().referencePoints.remove(splineViewport.getSpline().referencePoints.getLast());
-                }
-                else {
+                } else {
                     if (splineViewport.getSpline().referencePoints.isEmpty()) {
                         splineViewport.getSpline().referencePoints.add(new Point2D.Double(0, 0));
-                    }
-                    else{
+                    } else {
                         splineViewport.getSpline().referencePoints.add(new Point2D.Double(splineViewport.getSpline().referencePoints.getLast().getX() + 1, 0));
                     }
                 }
+            }
+            if (viewport3D.scene.isAutoChange) {
+                viewport3D.update();
             }
 
             splineViewport.repaint();
@@ -104,7 +102,7 @@ public class SplineViewportSettings extends JPanel {
         M1 = new JSpinner(new SpinnerNumberModel(viewport3D.scene.rotationFigure.getM1(), 1, 360, 1));
         M1.addChangeListener(e -> {
             JSpinner source = (JSpinner) e.getSource();
-            viewport3D.scene.rotationFigure.setM1((int)source.getValue());
+            viewport3D.scene.rotationFigure.setM1((int) source.getValue());
             if (viewport3D.scene.isAutoChange) {
                 viewport3D.update();
             }
@@ -164,20 +162,17 @@ public class SplineViewportSettings extends JPanel {
 
         // 4 ROW
         okButton = new JButton("OK");
-        okButton.addActionListener(e -> this.getParent());
         add(okButton);
 
         applyButton = new JButton("Apply");
         applyButton.addActionListener(e -> {
-            if ((int)K.getValue() < 4) {
+            if ((int) K.getValue() < 4) {
                 JOptionPane.showMessageDialog(this, "K should be more then 4");
             }
-            else if (!viewport3D.scene.isAutoChange){
-                viewport3D.scene.rotationFigure.setSpline(new BSpline(splineViewport.getSpline()));
-                viewport3D.scene.rotationFigure.setM((int)M.getValue());
-                viewport3D.scene.rotationFigure.getObject3D();
-                viewport3D.repaint();
-            }
+
+            viewport3D.scene.rotationFigure.setM((int) M.getValue());
+            viewport3D.update();
+
 
         });
         add(applyButton);
@@ -189,16 +184,13 @@ public class SplineViewportSettings extends JPanel {
         autoChangeButton.addActionListener(e -> {
             viewport3D.scene.isAutoChange = autoChangeButton.isSelected();
             if (autoChangeButton.isSelected()) {
-                splineViewport.spline = viewport3D.scene.rotationFigure.getSpline();
+                splineViewport.setSpline(viewport3D.scene.rotationFigure.getSpline());
                 splineViewport.repaint();
-                viewport3D.scene.rotationFigure.getObject3D();
-                viewport3D.repaint();
-            }
-            else {
+                viewport3D.update();
+            } else {
                 splineViewport.setSpline(new BSpline(viewport3D.scene.rotationFigure.getSpline()));
                 splineViewport.repaint();
-                viewport3D.scene.rotationFigure.getObject3D();
-                viewport3D.repaint();
+                viewport3D.update();
             }
         });
         add(autoChangeButton);

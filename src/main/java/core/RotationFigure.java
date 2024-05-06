@@ -12,7 +12,6 @@ public class RotationFigure {
 
     public RotationFigure() {
         this.spline = new BSpline();
-        this.object3D = new Object3D();
         this.M = 4;
         this.M1 = 1;
     }
@@ -115,10 +114,17 @@ public class RotationFigure {
             ArrayList<Point3D> generatrix = getGeneratix(j);
             connectGeneratix(object3D, generatrix);
         }
-        createCircle(object3D, 0);
-        for (int i = 4; i <= spline.approximationPoints.size(); i+=5) {
+        int step = spline.approximationPoints.size()/spline.referencePoints.size();
+        if (step == 0)
+            step = 1;
+
+        for (int i = 0; i < spline.approximationPoints.size() - 1; i+=step) {
             createCircle(object3D, i);
         }
+
+        createCircle(object3D, spline.approximationPoints.size() - 1);
+
+
 
         object3D = object3D.normalize();
     }
