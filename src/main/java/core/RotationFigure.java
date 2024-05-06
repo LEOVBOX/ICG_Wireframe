@@ -109,6 +109,7 @@ public class RotationFigure {
     }
 
     public void getObject3D() {
+        spline.caclApproximation();
         object3D = new Object3D();
         for (int j = 0; j < M; j++) {
             ArrayList<Point3D> generatrix = getGeneratix(j);
